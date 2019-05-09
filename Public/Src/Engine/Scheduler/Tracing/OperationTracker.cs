@@ -405,7 +405,16 @@ namespace BuildXL.Scheduler.Tracing
 
                 if (counter.Kind == OperationKind.PassThrough)
                 {
-                    index += PrintCounterList(builder, counter.Children, depth, includeAssociatedOperations);
+                    var printed = PrintCounterList(builder, counter.Children, depth, includeAssociatedOperations);
+
+                    // if nothing was printed we have a dangling comma that needs to be removed
+                    // or else we risk writing many commas with nothing in between them.
+                    if (index != 0 && printed == 0)
+                    {
+                        --builder.Length;
+                    }
+
+                    index += printed;
                 }
                 else
                 {
@@ -462,15 +471,15 @@ namespace BuildXL.Scheduler.Tracing
                         builder.Append(I($"'duration': '{operationDuration}', "));
                         if (operation.PipId.IsValid)
                         {
-                            builder.Append(I($"'pip': '{m_host.GetDescription(operation.PipId) ?? string.Empty}', "));
+                            builder.Append(I($"'pip': '{Newtonsoft.Json.JsonConvert.ToString(m_host.GetDescription(operation.PipId) ?? string.Empty)}', "));
                         }
 
                         if (operation.Artifact.IsValid)
                         {
-                            builder.Append(I($"'artifact': '{m_host.GetDescription(operation.Artifact) ?? string.Empty}', "));
+                            builder.Append(I($"'artifact': '{Newtonsoft.Json.JsonConvert.ToString(m_host.GetDescription(operation.Artifact) ?? string.Empty)}', "));
                         }
 
-                        builder.Append(I($"'details': '{operation.Operation?.Details ?? string.Empty}' }}"));
+                        builder.Append(I($"'details': '{Newtonsoft.Json.JsonConvert.ToString(operation.Operation?.Details ?? string.Empty)}' }}"));
                     }
 
                     builder.Append("]");
